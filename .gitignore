@@ -1,3 +1,6 @@
+# settings files
+src/algor/settings/__init__.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

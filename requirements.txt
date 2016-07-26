@@ -1,0 +1,5 @@
+Algorithmia == 1.0.5
+flask == 0.10.1
+requests == 2.10.0
+requests_oauthlib == 0.6.2
+withings == 0.3

@@ -1,0 +1,12 @@
+# uses the lib from https://github.com/maximebf/python-withings
+# you can obtain your setup instructions from http://oauth.withings.com/api#step1
+# http://oauth.withings.com/partner/dashboard
+CONSUMER_KEY = 'REPLACE_ME!'
+CONSUMER_SECRET = 'REPLACE_ME!'
+ACCESS_TOKEN = 'REPLACE_ME' # from the oauth process
+ACCESS_TOKEN_SECRET = 'REPLACE_ME' # from the oauth process
+USER_ID = 'REPLACE_ME'
+
+# Get your key setup here https://algorithmia.com/users/REPLACE_WITH_YOUR_USERNAME
+# http://developers.algorithmia.com/basics/getting-started/ for more info
+ALGORITHMIA_KEY = 'REPLACE_ME!'
