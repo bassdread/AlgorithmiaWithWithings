@@ -60,26 +60,38 @@
       <!-- Example row of columns -->
       <div class="row">
         <div class="col-md-16">
-          <div id="tester" style="width:1000px;height:600px;"></div>
+          <div id="historic_future_graph" style="width:1000px;height:600px;"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-16">
-          <div id="future" style="width:1000px;height:600px;"></div>
+          <div id="historic_graph" style="width:1000px;height:600px;"></div>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="col-md-16">
+          <div id="moving_averages_historic_graph" style="width:1000px;height:600px;"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-16">
-          <div id="both" style="width:1000px;height:600px;"></div>
+          <div id="future_graph" style="width:1000px;height:600px;"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-16">
+          <div id="moving_averages_future_graph" style="width:1000px;height:600px;"></div>
         </div>
       </div>
 
       <hr>
 
       <footer>
-        <p>&copy; 2015 Company, Inc.</p>
       </footer>
     </div> <!-- /container -->
 
@@ -93,76 +105,165 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
 <script>
-    TESTER = document.getElementById('tester');
-    Plotly.plot(TESTER, [
+
+
+    HISTORIC_FUTURE = document.getElementById('historic_future_graph');
+    Plotly.plot(HISTORIC_FUTURE, [
       {
         name: 'Systolic',
-        x: [{{readings.systolic.x|safe}}],
-        y: [{{readings.systolic.y|safe}}]
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.systolic|safe}}]
       },
       {
         name: 'Diastolic',
-        x: [{{readings.diastolic.x|safe}}],
-        y: [{{readings.diastolic.y|safe}}]
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.diastolic|safe}}]
       },
       {
         name: 'Pulse',
-        x: [{{readings.pulse.x|safe}}],
-        y: [{{readings.pulse.y|safe}}]
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.pulse|safe}}]
       },
-      {
-        name: 'Systolic Average',
-        x: [{{readings.simple_moving_average.systolic.x|safe}}],
-        y: [{{readings.simple_moving_average.systolic.y|safe}}]
-      },
-      {
-        name: 'Diastolic Average',
-        x: [{{readings.simple_moving_average.diastolic.x|safe}}],
-        y: [{{readings.simple_moving_average.diastolic.y|safe}}]
-      }
-
-      ], {
-    margin: { t: 0 } } );
-
-    FUTURE = document.getElementById('future');
-    Plotly.plot( FUTURE, [
       {
         name: 'Systolic Future',
-        x: [{{readings.systolic_future.x|safe}}],
-        y: [{{readings.systolic_future.y|safe}}]
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.systolic|safe}}]
       },
       {
         name: 'Diastolic Future',
-        x: [{{readings.diastolic_future.x|safe}}],
-        y: [{{readings.diastolic_future.y|safe}}]
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.pulse|safe}}]
       }
-      ], {
-    margin: { t: 0 } } );
+      ],
+      {
+        margin: { t: 0 }
+      });
 
-    BOTH = document.getElementById('both');
-    Plotly.plot( BOTH, [
-      {
-        name: 'Systolic Future',
-        x: [{{readings.systolic_future.x|safe}}],
-        y: [{{readings.systolic_future.y|safe}}]
-      },
-      {
-        name: 'Diastolic Future',
-        x: [{{readings.diastolic_future.x|safe}}],
-        y: [{{readings.diastolic_future.y|safe}}]
-      },
+    HISTORIC = document.getElementById('historic_graph');
+    Plotly.plot(HISTORIC, [
       {
         name: 'Systolic',
-        x: [{{readings.systolic.x|safe}}],
-        y: [{{readings.systolic.y|safe}}]
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.systolic|safe}}]
       },
       {
         name: 'Diastolic',
-        x: [{{readings.diastolic.x|safe}}],
-        y: [{{readings.diastolic.y|safe}}]
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.pulse|safe}}]
+      },
+      {
+        name: 'Systolic Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.systolic|safe}}]
+      },
+      {
+        name: 'Diastolic Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.pulse|safe}}]
       }
-      ], {
-    margin: { t: 0 } } );
+      ],
+      {
+        margin: { t: 0 }
+      });
+
+
+      MOVING_AVERAGES_GRAPH = document.getElementById('moving_averages_historic_graph');
+      Plotly.plot(MOVING_AVERAGES_GRAPH, [
+      {
+        name: 'Systolic Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.systolic|safe}}]
+      },
+      {
+        name: 'Diastolic Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Average',
+        x: [{{readings.past.x|safe}}],
+        y: [{{readings.past.simple_moving_average.pulse|safe}}]
+      }
+      ],
+      {
+        margin: { t: 0 }
+      });
+
+      FUTURE = document.getElementById('future_graph');
+      Plotly.plot(FUTURE, [
+      {
+        name: 'Systolic Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.systolic|safe}}]
+      },
+      {
+        name: 'Diastolic Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.pulse|safe}}]
+      },
+      {
+        name: 'Systolic Average Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.systolic|safe}}]
+      },
+      {
+        name: 'Diastolic Average Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Average Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.pulse|safe}}]
+      }
+      ],
+      {
+        margin: { t: 0 }
+      });
+
+
+      MOVING_AVERAGES_FUTURE_GRAPH = document.getElementById('moving_averages_future_graph');
+      Plotly.plot(MOVING_AVERAGES_FUTURE_GRAPH, [
+      {
+        name: 'Systolic Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.systolic|safe}}]
+      },
+      {
+        name: 'Diastolic Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.diastolic|safe}}]
+      },
+      {
+        name: 'Pulse Future',
+        x: [{{readings.future.x|safe}}],
+        y: [{{readings.future.simple_moving_average.pulse|safe}}]
+      }
+      ],
+      {
+        margin: { t: 0 }
+      });
+
 </script>
 
   </body>

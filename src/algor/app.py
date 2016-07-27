@@ -15,12 +15,20 @@ FORECAST = ALGORITHMIA_CLIENT.algo('TimeSeries/Forecast/0.2.0')
 
 app = Flask(__name__)
 
+# naff cahce to say on API calls while testing
+global RESULTS
+RESULTS = False
+
 
 @app.route("/")
 def withings():
-    meh, readings = _fetch_withings()
 
-    return render_template('withings.html', readings=readings)
+    global RESULTS
+
+    if not RESULTS:
+        RESULTS = _fetch_withings()
+
+    return render_template('withings.html', readings=RESULTS)
 
 
 def _fetch_withings():
@@ -36,44 +44,45 @@ def _fetch_withings():
     client = WithingsApi(creds)
 
     readings = {
-        'systolic': {
+        # predictions
+        'future' : {
             'x': '',
-            'y': '',
+            'diastolic': '',
+            'systolic': '',
+            'pulse': '',
+            'simple_moving_average' : {
+                'diastolic': '',
+                'pulse': '',
+                'systolic': '',
+            }
         },
-        'diastolic': {
+        # analysis of past readings
+        'past': {
             'x': '',
-            'y': '',
-        },
-        'simple_moving_average': {
-            'systolic': {
-                'x': '',
-                'y': '',
-            },
-            'diastolic': {
-                'x': '',
-                'y': '',
-            },
-        },
-        'systolic_future': {
-            'x': '',
-            'y': [],
-        },
-        'diastolic_future': {
-            'x': '',
-            'y': [],
-        },
-        'pulse': {
-            'x': '',
-            'y': '',
-        },
+            'diastolic': '',
+            'systolic': '',
+            'pulse': '',
+            'simple_moving_average' : {
+                'diastolic': '',
+                'pulse': '',
+                'systolic': '',
+            }
+        }
     }
 
     measures = client.get_measures()
 
+    # make sure the graph goes left to right
     measures.reverse()
 
     last_reading_date = measures[-1].date
     counter = 1
+
+    raw_readings = {
+        'systolic': [],
+        'diastolic': [],
+        'pulse': [],
+    }
 
     for measure in measures:
 
@@ -82,22 +91,21 @@ def _fetch_withings():
 
             next_date = last_reading_date + timedelta(days=counter)
 
-            readings['systolic']['x'] += '"' + measure.date.strftime('%Y-%m-%d %H:%M:%S') + '",'
-            readings['diastolic']['x'] += '"' + measure.date.strftime('%Y-%m-%d %H:%M:%S') + '",'
+            # sort out date times
+            readings['past']['x'] += '"' + measure.date.strftime('%Y-%m-%d %H:%M:%S') + '",'
+            readings['future']['x'] += '"' + next_date.strftime('%Y-%m-%d %H:%M:%S') + '",'
 
-            readings['systolic_future']['x'] += '"' + next_date.strftime('%Y-%m-%d %H:%M:%S') + '",'
-            readings['diastolic_future']['x'] += '"' + next_date.strftime('%Y-%m-%d %H:%M:%S') + '",'
-
-            readings['systolic']['y'] += str(measure.systolic_blood_pressure) + ','
-            readings['diastolic']['y'] += str(measure.diastolic_blood_pressure) + ','
+            readings['past']['systolic'] += str(measure.systolic_blood_pressure) + ','
+            readings['past']['diastolic'] += str(measure.diastolic_blood_pressure) + ','
 
             # keep ints for for sending to ALGORITHMIA
-            readings['systolic_future']['y'].append(measure.systolic_blood_pressure)
-            readings['diastolic_future']['y'].append(measure.diastolic_blood_pressure)
+            # should really rename it...
+            raw_readings['systolic'].append(measure.systolic_blood_pressure)
+            raw_readings['diastolic'].append(measure.diastolic_blood_pressure)
 
             if measure.heart_pulse and measure.heart_pulse > 30:
-                readings['pulse']['x'] += '"' + measure.date.strftime('%Y-%m-%d %H:%M:%S') + '",'
-                readings['pulse']['y'] += str(measure.heart_pulse) + ','
+                raw_readings['pulse'].append(measure.heart_pulse)
+                readings['past']['pulse'] += str(measure.heart_pulse) + ','
 
             counter += 1
 
@@ -105,45 +113,67 @@ def _fetch_withings():
             pass
 
     # trim that last ,
-    readings['diastolic']['y'] = readings['diastolic']['y'][:-1]
-    readings['systolic']['y'] = readings['systolic']['y'][:-1]
-
-    readings['pulse']['y'] = readings['pulse']['y'][:-1]
+    readings['past']['diastolic'] = readings['past']['diastolic'][:-1]
+    readings['past']['systolic'] = readings['past']['systolic'][:-1]
+    readings['past']['pulse'] = readings['past']['pulse'][:-1]
 
     # simple moving average of existing data
-    readings['diastolic']['x'] = readings['diastolic']['x'][:-1]
-    readings['systolic']['x'] = readings['systolic']['x'][:-1]
+    readings['past']['simple_moving_average']['diastolic'] = _get_simple_moving_average(raw_readings['diastolic'])
+    readings['past']['simple_moving_average']['systolic'] = _get_simple_moving_average(raw_readings['systolic'])
+    readings['past']['simple_moving_average']['pulse'] = _get_simple_moving_average(raw_readings['pulse'])
 
-    readings['pulse']['x'] = readings['pulse']['x'][:-1]
+    # populate the standard graphs and get the raw data to feed into thenext algorithm
+    readings['future']['diastolic'], future_diastolic = _get_forecast(raw_readings['diastolic'])
+    readings['future']['systolic'], future_systolic = _get_forecast(raw_readings['systolic'])
+    readings['future']['pulse'], future_pulse = _get_forecast(raw_readings['pulse'])
 
-    readings['diastolic_future']['x'] = readings['diastolic_future']['x'][:-1]
-    readings['systolic_future']['x'] = readings['systolic_future']['x'][:-1]
+    # simple moving average of future data
+    readings['future']['simple_moving_average']['diastolic'] = _get_simple_moving_average(future_diastolic)
+    readings['future']['simple_moving_average']['systolic'] = _get_simple_moving_average(future_systolic)
+    readings['future']['simple_moving_average']['pulse'] = _get_simple_moving_average(future_pulse)
 
-    # get simple moving average
-    readings['simple_moving_average']['diastolic']['x'] = readings['diastolic']['x']
-    readings['simple_moving_average']['systolic']['x'] = readings['systolic']['x']
 
-    readings['simple_moving_average']['diastolic']['y'] = _get_simple_moving_average(readings['diastolic_future']['y'])
-    readings['simple_moving_average']['systolic']['y'] = _get_simple_moving_average(readings['systolic_future']['y'])
+    #readings['diastolic_future']['x'] = readings['diastolic_future']['x'][:-1]
+    #readings['systolic_future']['x'] = readings['systolic_future']['x'][:-1]
 
-    # call Algorithmia to get the predictions
-    readings['diastolic_future']['y'] = _get_forecast(readings['diastolic_future']['y'])
-    readings['systolic_future']['y'] = _get_forecast(readings['systolic_future']['y'])
+    ## get simple moving average
+    #readings['simple_moving_average']['diastolic']['x'] = readings['diastolic']['x']
+    #readings['simple_moving_average']['systolic']['x'] = readings['systolic']['x']
 
-    return results, readings
+    #readings['simple_moving_average']['diastolic']['y'] = _get_simple_moving_average(raw_readings['diastolic'])
+    #readings['simple_moving_average']['systolic']['y'] = _get_simple_moving_average(raw_readings['systolic'])
+
+    #readings['simple_moving_average_future']['diastolic']['x'] = readings['diastolic_future']['x']
+    #readings['simple_moving_average_future']['systolic']['x'] = readings['systolic_future']['x']
+
+    ## call Algorithmia to get the predictions
+    #diastolic_future_string, diastolic_future_array = _get_forecast(raw_readings['diastolic'])
+    #systolic_future_string, systolic_future_array = _get_forecast(raw_readings['systolic'])
+
+    ## to graph
+    #readings['diastolic_future']['y'] =  diastolic_future_string
+    #readings['systolic_future']['y'] = systolic_future_string
+
+    ## moving average to graph
+    #readings['simple_moving_average_future']['diastolic']['y'] = _get_simple_moving_average(diastolic_future_array)
+    #readings['simple_moving_average_future']['systolic']['y'] = _get_simple_moving_average(systolic_future_array)
+
+    return readings
 
 
 def _get_forecast(data):
 
     string = ''
+    raw = []
 
     reply = FORECAST.pipe(data)
     for reading in reply.result:
         string += str(int(reading)) + ','
+        raw.append(reading)
 
     string = string[:-1]
 
-    return string
+    return string, raw
 
 
 def _get_simple_moving_average(data):
