@@ -16,7 +16,7 @@ FORECAST = ALGORITHMIA_CLIENT.algo('TimeSeries/Forecast/0.2.0')
 app = Flask(__name__)
 
 global FORECAST_ON_AVERAGE
-FORECAST_ON_AVERAGE = FALSE
+FORECAST_ON_AVERAGE = False
 
 # naff cahce to say on API calls while testing
 global RESULTS
