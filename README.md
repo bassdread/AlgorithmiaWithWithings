@@ -1,7 +1,12 @@
 # AlgorithmiaWithWithings
 Run Algorithmia tasks against Withings data in Python
 
-# Setup
+# Setup Withings
+You will need an app configuring on the Withings side. http://oauth.withings.com/partner/dashboard provides some simple steps to setup a new app. You will need the API Key and API Secret which map to CONSUMER_KEY and CONSUMER_SECRET in the Python app below.
+
+More information on the OAuth setup can be found here: http://oauth.withings.com/api
+
+# Setup the App
 ```
 git clone git@github.com:bassdread/AlgorithmiaWithWithings.git
 cd AlgorithmiaWithWithings
